@@ -189,8 +189,8 @@ export class Session extends DurableObject {
     for (const [pid, a] of Object.entries(s.answers)) {
       const p = s.players[pid];
       if (p && a.i === q.answer) {
-        // Kahoot-style: 1000 for an instant answer, down to 500 at the buzzer.
-        const gain = Math.round(1000 - 500 * Math.min(1, a.ms / total));
+        // Points count down with the clock: 1000 for an instant answer, 0 at the buzzer.
+        const gain = Math.round(1000 * Math.max(0, 1 - a.ms / total));
         p.correct++; p.ms += a.ms; p.points = (p.points || 0) + gain; p.last = gain;
       }
     }

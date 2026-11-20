@@ -28,6 +28,7 @@
 .prompt{font:700 clamp(28px,4vw,56px)/1.12 Barlow,sans-serif;text-align:center;text-wrap:balance;margin:auto 0}
 .qhead{display:flex;align-items:center;gap:16px}
 .clock{width:96px;height:96px;border-radius:50%;background:var(--red);display:grid;place-items:center;font:800 46px "Barlow Condensed",sans-serif;flex:none}
+.pts{font-size:44px;color:#ffd166;min-width:3.2ch;font-variant-numeric:tabular-nums}
 .ready{font:800 clamp(80px,14vw,180px) "Barlow Condensed",sans-serif;color:var(--red)}
 .revealgrid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:24px;margin-top:18px}
 .podium{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:end;max-width:900px;width:100%;margin:0 auto}
@@ -95,6 +96,7 @@
     <div class="qhead">
       <div><div class="muted cond" style="font-size:24px" id="qNum"></div><div class="chip" id="qTag"></div></div>
       <div class="spacer" style="flex:1"></div>
+      <div style="text-align:right"><div class="cond pts" id="pts">1000</div><div class="muted">points</div></div>
       <div style="text-align:right"><div class="cond" style="font-size:36px" id="answered"></div><div class="muted">answered</div></div>
       <div class="clock" id="clock">20</div>
     </div>
@@ -221,6 +223,7 @@ function renderQ(m) {
   if (rev) {
     clearInterval(tickId); tickId = null;
     $("#clock").textContent = "✓";
+    $("#pts").textContent = "–";
     $("#tbar").style.transform = "scaleX(0)";
     $("#readyBox").classList.add("hidden"); $("#prompt").classList.remove("hidden"); $("#opts").classList.remove("hidden");
     if (isNew) { G.music.stop(); G.sfx.reveal(); }
@@ -235,9 +238,10 @@ function renderQ(m) {
       $("#readyBox").classList.toggle("hidden", !ready);
       $("#prompt").classList.toggle("hidden", ready);
       $("#opts").classList.toggle("hidden", ready);
-      if (ready) { $("#readyN").textContent = Math.ceil((m.qStart - now) / 1000); return; }
+      if (ready) { $("#readyN").textContent = Math.ceil((m.qStart - now) / 1000); $("#pts").textContent = 1000; return; }
       const left = Math.max(0, m.deadline - now), sec = Math.ceil(left / 1000);
       $("#clock").textContent = sec;
+      $("#pts").textContent = Math.round(1000 * left / (m.deadline - m.qStart));
       $("#tbar").style.transform = `scaleX(${left / (m.deadline - m.qStart)})`;
       if (sec !== lastSec && sec <= 5 && sec > 0) G.sfx.tick(sec <= 3);
       lastSec = sec;

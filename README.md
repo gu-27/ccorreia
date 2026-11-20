@@ -5,7 +5,7 @@ Kahoot-style live review games for Individual Income Taxes, Ch. 5 (Exclusions) a
 - **Students:** go to `ccorreia.pages.dev/games/tax-review-fall2026`, enter the 5-character code and their name, then wait for the host.
 - **Host (you):** go to `ccorreia.pages.dev/games/tax-review-fall2026/host`, pick Card Sort, Two Truths & a Lie, or Mix, then pick the number of questions and seconds per question, and click **Create session**. Project the lobby screen, which shows the code and a QR code. Click **Start game** once everyone is in.
 
-Scoring is Kahoot-style: a correct answer earns 1,000 points if instant, down to 500 at the buzzer. Wrong or no answer earns 0. After each question the host screen shows the right answer, how many picked each option, the explanation and the top 5. The game ends with a podium for the top 3, plus confetti and a fanfare. The music and sound effects are original, generated in the browser. Use the ♪ button to mute.
+Scoring is Kahoot-style: each question starts at 1,000 points and counts down to 0 as the clock runs out (shown live on both screens). A correct answer earns the points showing when it was submitted. Wrong or no answer earns 0. After each question the host screen shows the right answer, how many picked each option, the explanation and the top 5. The game ends with a podium for the top 3, plus confetti and a fanfare. The music and sound effects are original, generated in the browser. Use the ♪ button to mute.
 
 ## Layout
 

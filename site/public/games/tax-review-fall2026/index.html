@@ -10,6 +10,7 @@
 .stage{padding:max(16px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom))}
 form{width:100%;max-width:420px;display:grid;gap:12px}
 #code{text-transform:uppercase;letter-spacing:6px;text-align:center;font:800 32px "Barlow Condensed",sans-serif}
+.pts{font-size:30px;color:#ffd166;font-variant-numeric:tabular-nums}
 .big{font:800 clamp(40px,12vw,64px)/1 "Barlow Condensed",sans-serif}
 .pulse{animation:pulse 1.6s infinite}
 @keyframes pulse{50%{opacity:.4}}
@@ -55,7 +56,7 @@ form{width:100%;max-width:420px;display:grid;gap:12px}
   </section>
 
   <section id="vQ" class="hidden" style="flex:1;display:flex;flex-direction:column;gap:14px;padding-top:14px">
-    <div class="top"><span class="chip" id="qTag"></span><div class="spacer"></div><span class="cond" style="font-size:30px" id="clock"></span></div>
+    <div class="top"><span class="chip" id="qTag"></span><div class="spacer"></div><span class="cond pts" id="pts">1000</span><span class="muted" style="font-size:14px">pts</span><span class="cond" style="font-size:30px;margin-left:8px" id="clock"></span></div>
     <div class="timerbar"><i id="tbar"></i></div>
     <div class="item" id="item"></div>
     <div class="opts" id="opts"></div>
@@ -64,6 +65,7 @@ form{width:100%;max-width:420px;display:grid;gap:12px}
   <section id="vLocked" class="center hidden">
     <div class="big">Locked in</div>
     <div class="why" id="lockedAns" style="max-width:480px"></div>
+    <div class="cond" style="font-size:26px;color:#ffd166" id="lockedWorth"></div>
     <div class="muted pulse">Waiting for everyone else…</div>
   </section>
 
@@ -144,6 +146,7 @@ function question(m, isNew) {
   if (m.you.answered != null) { clearInterval(tickId); return locked(m.q, m.you.answered); }
   if (!isNew) return;
   pending = null;
+  $("#lockedWorth").textContent = "";
   const q = m.q;
   $("#qTag").textContent = `${m.qi + 1}/${m.total} · ${q.tag}`;
   $("#item").textContent = q.kind === "lie" ? "Which one is the lie?" : q.prompt;
@@ -156,6 +159,7 @@ function question(m, isNew) {
     if (pending == null) show("vQ");
     const left = Math.max(0, m.deadline - now);
     $("#clock").textContent = Math.ceil(left / 1000);
+    $("#pts").textContent = Math.round(1000 * left / (m.deadline - m.qStart));
     $("#tbar").style.transform = `scaleX(${left / (m.deadline - m.qStart)})`;
   };
   tick(); tickId = setInterval(tick, 100);
@@ -167,12 +171,13 @@ $("#opts").onclick = (e) => {
   if (navigator.vibrate) try { navigator.vibrate(30); } catch {}
   G.sfx.click();
   sock.send({ t: "answer", i: pending });
-  locked(null, pending, b.textContent.slice(1).trim());
+  locked(null, pending, b.textContent.slice(1).trim(), $("#pts").textContent);
 };
 
-function locked(q, i, text) {
+function locked(q, i, text, worth) {
   show("vLocked");
   $("#lockedAns").textContent = `${letters[i]}. ${text || (q ? q.options[i] : "")}`;
+  if (worth) $("#lockedWorth").textContent = `Worth ${worth} points if it's right`;
 }
 
 function reveal(m, isNew) {
