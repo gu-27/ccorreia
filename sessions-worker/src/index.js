@@ -103,7 +103,7 @@ export class Session extends DurableObject {
         const taken = new Set(Object.values(s.players).map((p) => p.name.toLowerCase()));
         let base = name, n = 2;
         while (taken.has(name.toLowerCase())) name = `${base} ${n++}`;
-        s.players[pid] = { name, correct: 0, ms: 0, joined: Date.now() };
+        s.players[pid] = { name, correct: 0, ms: 0, points: 0, last: 0, joined: Date.now() };
         await this.save();
       }
       att = { role: "player", pid };
@@ -184,9 +184,15 @@ export class Session extends DurableObject {
     const s = this.s;
     if (s.phase !== "question") return;
     const q = s.qs[s.qi];
+    const total = s.secs * 1000;
+    for (const p of Object.values(s.players)) p.last = 0;
     for (const [pid, a] of Object.entries(s.answers)) {
       const p = s.players[pid];
-      if (p && a.i === q.answer) { p.correct++; p.ms += a.ms; }
+      if (p && a.i === q.answer) {
+        // Kahoot-style: 1000 for an instant answer, down to 500 at the buzzer.
+        const gain = Math.round(1000 - 500 * Math.min(1, a.ms / total));
+        p.correct++; p.ms += a.ms; p.points = (p.points || 0) + gain; p.last = gain;
+      }
     }
     s.phase = "reveal";
     await this.save();
@@ -214,8 +220,8 @@ export class Session extends DurableObject {
 
   board() {
     return Object.entries(this.s.players)
-      .map(([id, p]) => ({ id, name: p.name, correct: p.correct, ms: p.ms }))
-      .sort((a, b) => b.correct - a.correct || a.ms - b.ms || a.name.localeCompare(b.name))
+      .map(([id, p]) => ({ id, name: p.name, correct: p.correct, ms: p.ms, points: p.points || 0, last: p.last || 0 }))
+      .sort((a, b) => b.points - a.points || b.correct - a.correct || a.ms - b.ms || a.name.localeCompare(b.name))
       .map((p, i) => ({ ...p, rank: i + 1 }));
   }
 
@@ -240,13 +246,13 @@ export class Session extends DurableObject {
       v.reveal = { answer: q.answer, why: q.why, dist };
     }
     if (s.phase === "reveal" || s.phase === "end") {
-      v.board = (att.role === "host" ? board : board.slice(0, 5)).map(({ id, name, correct, rank }) => ({ id, name, correct, rank }));
+      v.board = (att.role === "host" ? board : board.slice(0, 5)).map(({ id, name, correct, points, rank }) => ({ id, name, correct, points, rank }));
     }
     if (att.role === "player") {
       const me = board.find((p) => p.id === att.pid);
       if (me) {
         const a = s.answers[att.pid];
-        v.you = { name: me.name, correct: me.correct, rank: me.rank, of: board.length, answered: a ? a.i : null };
+        v.you = { name: me.name, correct: me.correct, points: me.points, last: me.last, rank: me.rank, of: board.length, answered: a ? a.i : null };
         if (s.phase === "reveal" && q) v.you.right = !!a && a.i === q.answer;
       } else v.you = null;
     }

@@ -182,9 +182,9 @@ function reveal(m, isNew) {
   const ok = m.you.right, a = m.reveal.answer, mine = m.you.answered;
   $("#result").className = "result " + (ok ? "ok" : "no");
   $("#resTitle").textContent = ok ? "Correct!" : mine == null ? "Time's up" : "Not quite";
-  $("#resSub").textContent = ok ? "Nice work." : `Answer: ${letters[a]}. ${m.q.options[a]}`;
+  $("#resSub").textContent = ok ? `+${m.you.last} points` : `Answer: ${letters[a]}. ${m.q.options[a]}`;
   $("#why").textContent = m.reveal.why;
-  $("#myScore").textContent = `${m.you.correct} correct`;
+  $("#myScore").textContent = `${m.you.points.toLocaleString()} pts · ${m.you.correct} correct`;
   $("#myRank").textContent = `#${m.you.rank} of ${m.you.of}`;
   ok ? G.sfx.right() : G.sfx.wrong();
 }
@@ -195,8 +195,8 @@ function end(m, isNew) {
   if (!isNew) return;
   const r = m.you.rank;
   $("#place").textContent = `#${r}`;
-  $("#endMsg").textContent = r === 1 ? "Champion! 🏆" : r <= 3 ? "You made the podium!" : `${m.you.correct} correct. Nice effort!`;
-  $("#top3").innerHTML = (m.board || []).slice(0, 3).map((p) => `<li><span class="r">${p.rank}</span>${esc(p.name)}<span class="s">${p.correct}</span></li>`).join("");
+  $("#endMsg").textContent = r === 1 ? "Champion! 🏆" : r <= 3 ? "You made the podium!" : `${m.you.points.toLocaleString()} points. Nice effort!`;
+  $("#top3").innerHTML = (m.board || []).slice(0, 3).map((p) => `<li><span class="r">${p.rank}</span>${esc(p.name)}<span class="s">${p.points.toLocaleString()}</span></li>`).join("");
   if (r <= 3) { G.sfx.fanfare(); setTimeout(() => G.confetti(5000), 1000); }
 }
 }

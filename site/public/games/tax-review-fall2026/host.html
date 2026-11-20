@@ -225,7 +225,7 @@ function renderQ(m) {
     $("#readyBox").classList.add("hidden"); $("#prompt").classList.remove("hidden"); $("#opts").classList.remove("hidden");
     if (isNew) { G.music.stop(); G.sfx.reveal(); }
     $("#why").innerHTML = `<b>${letters[rev.answer]}. ${esc(q.options[rev.answer])}</b><br>${esc(rev.why)}`;
-    $("#top5").innerHTML = (m.board || []).slice(0, 5).map((p) => `<li><span class="r">${p.rank}</span>${esc(p.name)}<span class="s">${p.correct}</span></li>`).join("");
+    $("#top5").innerHTML = (m.board || []).slice(0, 5).map((p) => `<li><span class="r">${p.rank}</span>${esc(p.name)}<span class="s">${p.points.toLocaleString()}</span></li>`).join("");
   } else if (isNew) {
     G.music.play("question");
     clearInterval(tickId); lastSec = null;
@@ -251,9 +251,9 @@ function renderEnd(m) {
   if (lastPhase === "end") return;
   clearInterval(tickId); G.music.stop();
   const b = m.board || [];
-  const slot = (p, place) => p ? `<div class="col"><div class="winner">${esc(p.name)}<small>${p.correct} correct</small></div><div class="step p${place}"><div class="place">${place}</div></div></div>` : `<div class="col"></div>`;
+  const slot = (p, place) => p ? `<div class="col"><div class="winner">${esc(p.name)}<small>${p.points.toLocaleString()} pts · ${p.correct} correct</small></div><div class="step p${place}"><div class="place">${place}</div></div></div>` : `<div class="col"></div>`;
   $("#podium").innerHTML = slot(b[1], 2) + slot(b[0], 1) + slot(b[2], 3);
-  $("#all").innerHTML = b.map((p) => `<li><span class="r">${p.rank}</span>${esc(p.name)}<span class="s">${p.correct}/${m.total}</span></li>`).join("");
+  $("#all").innerHTML = b.map((p) => `<li><span class="r">${p.rank}</span>${esc(p.name)}<span class="s">${p.points.toLocaleString()} <small class="muted" style="font:600 15px Barlow,sans-serif">(${p.correct}/${m.total})</small></span></li>`).join("");
   G.sfx.fanfare();
   setTimeout(() => G.confetti(6000), 2900);
 }
