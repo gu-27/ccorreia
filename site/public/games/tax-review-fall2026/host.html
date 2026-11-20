@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Host · Tax Review Live</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&family=Barlow:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/games/tax-review-fall2026/style.css">
+<style>
+.setup{max-width:880px;margin:auto;width:100%;display:grid;gap:22px}
+.games{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.game{background:var(--panel);border:3px solid transparent;border-radius:16px;padding:18px;text-align:left;color:#fff;min-height:150px}
+.game h3{font-size:30px;margin-bottom:6px}
+.game[aria-pressed=true]{border-color:var(--red);background:#2a1015}
+.seg{display:flex;flex-wrap:wrap;gap:8px}
+.seg button{background:var(--panel);color:#fff;border:2px solid #444;border-radius:10px;min-height:48px;padding:6px 18px;font-weight:700}
+.seg button[aria-pressed=true]{background:var(--red);border-color:var(--red)}
+.lobby{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:28px;flex:1;align-items:center}
+.join{background:#fff;color:#111;border-radius:22px;padding:clamp(20px,3vw,40px);display:grid;gap:10px;justify-items:center;text-align:center}
+.join .url{font:800 clamp(26px,3.4vw,44px) "Barlow Condensed",sans-serif}
+.join .code{font:800 clamp(72px,11vw,150px)/1 "Barlow Condensed",sans-serif;letter-spacing:8px;color:var(--red)}
+.qr svg{width:180px;height:180px}
+.people{display:flex;flex-wrap:wrap;gap:10px;align-content:flex-start;max-height:58vh;overflow:auto}
+.person{background:var(--panel);border-radius:99px;padding:8px 16px;font:700 20px Barlow,sans-serif;animation:pop .35s}
+.person.off{opacity:.45}
+.person button{background:none;border:0;color:#888;margin-left:6px;font-size:16px}
+@keyframes pop{from{transform:scale(.6);opacity:0}}
+.prompt{font:700 clamp(28px,4vw,56px)/1.12 Barlow,sans-serif;text-align:center;text-wrap:balance;margin:auto 0}
+.qhead{display:flex;align-items:center;gap:16px}
+.clock{width:96px;height:96px;border-radius:50%;background:var(--red);display:grid;place-items:center;font:800 46px "Barlow Condensed",sans-serif;flex:none}
+.ready{font:800 clamp(80px,14vw,180px) "Barlow Condensed",sans-serif;color:var(--red)}
+.revealgrid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:24px;margin-top:18px}
+.podium{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:end;max-width:900px;width:100%;margin:0 auto}
+.step{background:var(--red);border-radius:14px 14px 0 0;display:flex;flex-direction:column;justify-content:flex-start;align-items:center;padding-top:14px;transform-origin:bottom;animation:rise 1s cubic-bezier(.2,.9,.3,1.2) both}
+.step .place{font:800 64px "Barlow Condensed",sans-serif}
+.step.p1{height:230px;animation-delay:2.6s;background:linear-gradient(#d12a45,#A6192E)}
+.step.p2{height:170px;animation-delay:1.6s;background:#5a5a5a}
+.step.p3{height:120px;animation-delay:.6s;background:#6d1020}
+.winner{text-align:center;font:800 clamp(22px,3vw,36px) "Barlow Condensed",sans-serif;margin-bottom:8px;animation:fade .6s both}
+.col{display:flex;flex-direction:column}
+.col:nth-child(1) .winner{animation-delay:1.9s}.col:nth-child(2) .winner{animation-delay:2.9s}.col:nth-child(3) .winner{animation-delay:.9s}
+.winner small{display:block;font:600 16px Barlow,sans-serif;color:var(--muted)}
+@keyframes rise{from{transform:scaleY(0)}}
+@keyframes fade{from{opacity:0;transform:translateY(10px)}}
+@media(max-width:800px){.lobby,.revealgrid{grid-template-columns:1fr}.games{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="top">
+    <div class="brand">TAX REVIEW <b>LIVE</b></div>
+    <span class="chip hidden" id="conn">Reconnecting…</span>
+    <div class="spacer"></div>
+    <span class="chip hidden" id="count"></span>
+    <button class="icon" id="mute" aria-label="Toggle music">♪</button>
+  </div>
+
+  <!-- SETUP -->
+  <section id="vSetup" class="center">
+    <div class="setup">
+      <h1 style="font-size:clamp(40px,6vw,64px)">Start a game</h1>
+      <div class="games" id="games">
+        <button class="game" data-g="sort" aria-pressed="true"><h3>Card Sort</h3><div class="muted">Taxable, excluded, deductible, or not? 48 items.</div></button>
+        <button class="game" data-g="lie" aria-pressed="false"><h3>Two Truths &amp; a Lie</h3><div class="muted">Spot the false statement. 19 rounds.</div></button>
+        <button class="game" data-g="mix" aria-pressed="false"><h3>Mix</h3><div class="muted">Both games shuffled together.</div></button>
+      </div>
+      <div><div class="muted" style="margin-bottom:8px;text-align:left">Questions</div>
+        <div class="seg" id="segCount"><button data-v="10" aria-pressed="false">10</button><button data-v="15" aria-pressed="true">15</button><button data-v="20" aria-pressed="false">20</button><button data-v="0" aria-pressed="false">All</button></div></div>
+      <div><div class="muted" style="margin-bottom:8px;text-align:left">Seconds per question</div>
+        <div class="seg" id="segSecs"><button data-v="15" aria-pressed="false">15</button><button data-v="20" aria-pressed="true">20</button><button data-v="30" aria-pressed="false">30</button><button data-v="45" aria-pressed="false">45</button></div></div>
+      <div class="top"><button class="btn" id="create" style="font-size:28px;padding:14px 34px">Create session</button><button class="btn ghost hidden" id="resume">Resume last session</button><span class="muted" id="err"></span></div>
+    </div>
+  </section>
+
+  <!-- LOBBY -->
+  <section id="vLobby" class="hidden" style="flex:1;display:flex;flex-direction:column">
+    <div class="lobby">
+      <div class="join">
+        <div class="muted" style="color:#555;font-weight:700">Go to</div>
+        <div class="url" id="url"></div>
+        <div style="color:#555;font-weight:700">and enter code</div>
+        <div class="code" id="code"></div>
+        <div class="qr" id="qr"></div>
+      </div>
+      <div style="display:grid;gap:16px">
+        <h2 style="font-size:44px"><span id="nPlayers">0</span> players in</h2>
+        <div class="people" id="people"><span class="muted">Waiting for players to join…</span></div>
+        <div><button class="btn" id="start" disabled style="font-size:32px;padding:16px 44px">Start game</button></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUESTION + REVEAL -->
+  <section id="vQ" class="hidden" style="flex:1;display:flex;flex-direction:column;gap:18px;padding-top:16px">
+    <div class="qhead">
+      <div><div class="muted cond" style="font-size:24px" id="qNum"></div><div class="chip" id="qTag"></div></div>
+      <div class="spacer" style="flex:1"></div>
+      <div style="text-align:right"><div class="cond" style="font-size:36px" id="answered"></div><div class="muted">answered</div></div>
+      <div class="clock" id="clock">20</div>
+    </div>
+    <div class="timerbar"><i id="tbar"></i></div>
+    <div id="readyBox" class="center hidden"><div class="muted cond" style="font-size:34px">Get ready</div><div class="ready" id="readyN">3</div></div>
+    <div class="prompt" id="prompt"></div>
+    <div class="opts" id="opts"></div>
+    <div id="revealBox" class="revealgrid hidden">
+      <div class="why" id="why"></div>
+      <div><h3 style="font-size:28px;margin-bottom:8px">Leaderboard</h3><ol class="board" id="top5"></ol></div>
+    </div>
+    <div class="top"><div class="spacer"></div><button class="btn ghost" id="endEarly">End game</button><button class="btn" id="skip">Reveal answer</button><button class="btn hidden" id="next">Next question</button></div>
+  </section>
+
+  <!-- FINAL -->
+  <section id="vEnd" class="hidden" style="flex:1;display:flex;flex-direction:column;gap:20px;padding-top:8px">
+    <h1 style="text-align:center;font-size:clamp(40px,5vw,64px)">Final results</h1>
+    <div class="podium" id="podium"></div>
+    <div style="max-width:700px;margin:0 auto;width:100%"><ol class="board" id="all"></ol></div>
+    <div style="text-align:center"><button class="btn" id="again">New game</button></div>
+  </section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<script src="/games/tax-review-fall2026/common.js"></script>
+<script>
+{
+const $ = (s) => document.querySelector(s), G = window.Game, esc = G.esc;
+const views = ["vSetup", "vLobby", "vQ", "vEnd"];
+const show = (id) => views.forEach((v) => $("#" + v).classList.toggle("hidden", v !== id));
+let sock = null, state = null, lastPhase = null, lastQi = -2, tickId = null, lastSec = null;
+const opts = { game: "sort", count: 15, secs: 20 };
+const joinUrl = location.host + "/games/tax-review-fall2026";
+
+function pick(container, key, attr) {
+  container.onclick = (e) => {
+    const b = e.target.closest("button"); if (!b) return;
+    [...container.children].forEach((x) => x.setAttribute("aria-pressed", x === b));
+    opts[key] = attr === "g" ? b.dataset.g : Number(b.dataset.v);
+  };
+}
+pick($("#games"), "game", "g"); pick($("#segCount"), "count"); pick($("#segSecs"), "secs");
+
+$("#mute").onclick = () => { const m = G.music.toggle(); $("#mute").textContent = m ? "🔇" : "♪"; };
+$("#mute").textContent = G.music.muted ? "🔇" : "♪";
+
+const saved = G.store.get("hostSession");
+if (saved) $("#resume").classList.remove("hidden");
+$("#resume").onclick = () => { G.sfx.unlock(); join(saved.code, saved.hostKey); };
+
+$("#create").onclick = async () => {
+  G.sfx.unlock();
+  $("#create").disabled = true; $("#err").textContent = "";
+  try {
+    const r = await fetch("/games/tax-review-fall2026/api/session", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(opts) });
+    if (!r.ok) throw new Error(await r.text());
+    const { code, hostKey } = await r.json();
+    G.store.set("hostSession", { code, hostKey });
+    join(code, hostKey);
+  } catch (e) { $("#err").textContent = "Couldn't create a session. Try again."; }
+  $("#create").disabled = false;
+};
+
+function join(code, key) {
+  if (sock) sock.close();
+  const proto = location.protocol === "https:" ? "wss" : "ws";
+  sock = G.connect(`${proto}://${location.host}/games/tax-review-fall2026/ws/${code}?host=${encodeURIComponent(key)}`, onMsg,
+    (ok) => $("#conn").classList.toggle("hidden", ok));
+  $("#code").textContent = code;
+  $("#url").textContent = joinUrl;
+  try {
+    const q = qrcode(0, "M"); q.addData(`${location.origin}/games/tax-review-fall2026/?code=${code}`); q.make();
+    $("#qr").innerHTML = q.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
+  } catch { $("#qr").innerHTML = ""; }
+}
+
+$("#start").onclick = () => sock.send({ t: "start" });
+$("#skip").onclick = () => sock.send({ t: "reveal" });
+$("#next").onclick = () => sock.send({ t: "next" });
+$("#endEarly").onclick = () => { if ($("#endEarly").dataset.armed) sock.send({ t: "end" }); else { $("#endEarly").dataset.armed = 1; $("#endEarly").textContent = "Tap again to end"; setTimeout(() => { delete $("#endEarly").dataset.armed; $("#endEarly").textContent = "End game"; }, 3000); } };
+$("#again").onclick = () => { if (sock) sock.close(); sock = null; G.store.set("hostSession", null); G.music.stop(); lastPhase = null; $("#count").classList.add("hidden"); $("#resume").classList.add("hidden"); show("vSetup"); };
+$("#people").onclick = (e) => { const b = e.target.closest("[data-kick]"); if (b) sock.send({ t: "kick", pid: b.dataset.kick }); };
+
+function onMsg(m) {
+  if (m.t !== "state") return;
+  state = m;
+  const online = m.players.filter((p) => p.online).length;
+  $("#count").textContent = `${online} online`; $("#count").classList.remove("hidden");
+  if (m.phase === "lobby") renderLobby(m);
+  else if (m.phase === "question" || m.phase === "reveal") renderQ(m);
+  else if (m.phase === "end") renderEnd(m);
+  lastPhase = m.phase; lastQi = m.qi;
+}
+
+function renderLobby(m) {
+  show("vLobby"); G.music.play("lobby");
+  $("#nPlayers").textContent = m.players.length;
+  $("#people").innerHTML = m.players.length
+    ? m.players.map((p) => `<span class="person${p.online ? "" : " off"}">${esc(p.name)}<button data-kick="${esc(p.id)}" aria-label="Remove ${esc(p.name)}">✕</button></span>`).join("")
+    : '<span class="muted">Waiting for players to join…</span>';
+  $("#start").disabled = !m.players.length;
+}
+
+const letters = "ABCD";
+function renderQ(m) {
+  show("vQ");
+  const isNew = m.qi !== lastQi || lastPhase !== m.phase;
+  const q = m.q, rev = m.reveal;
+  $("#qNum").textContent = `Question ${m.qi + 1} of ${m.total}`;
+  $("#qTag").textContent = q.tag;
+  $("#prompt").textContent = q.kind === "lie" ? "Which one is the lie?" : q.prompt;
+  $("#prompt").style.fontSize = q.kind === "lie" ? "" : "";
+  $("#answered").textContent = `${m.answered}/${m.players.filter((p) => p.online).length || m.players.length}`;
+  if (isNew) {
+    const max = rev ? Math.max(1, ...rev.dist) : 1;
+    $("#opts").innerHTML = q.options.map((o, i) => `<div class="opt o${i}${rev && i !== rev.answer ? " dim" : ""}${rev && i === rev.answer ? " correct" : ""}">
+      <span class="k">${letters[i]}</span><span>${esc(o)}</span>${rev ? `<span class="n">${rev.dist[i]}</span><i class="bar" style="width:${(rev.dist[i] / max) * 100}%"></i>` : ""}</div>`).join("");
+    $("#opts").style.gridTemplateColumns = q.kind === "lie" ? "1fr" : "";
+  }
+  $("#skip").classList.toggle("hidden", !!rev);
+  $("#next").classList.toggle("hidden", !rev);
+  $("#next").textContent = m.qi + 1 >= m.total ? "Final results" : "Next question";
+  $("#revealBox").classList.toggle("hidden", !rev);
+  if (rev) {
+    clearInterval(tickId); tickId = null;
+    $("#clock").textContent = "✓";
+    $("#tbar").style.transform = "scaleX(0)";
+    $("#readyBox").classList.add("hidden"); $("#prompt").classList.remove("hidden"); $("#opts").classList.remove("hidden");
+    if (isNew) { G.music.stop(); G.sfx.reveal(); }
+    $("#why").innerHTML = `<b>${letters[rev.answer]}. ${esc(q.options[rev.answer])}</b><br>${esc(rev.why)}`;
+    $("#top5").innerHTML = (m.board || []).slice(0, 5).map((p) => `<li><span class="r">${p.rank}</span>${esc(p.name)}<span class="s">${p.correct}</span></li>`).join("");
+  } else if (isNew) {
+    G.music.play("question");
+    clearInterval(tickId); lastSec = null;
+    const tick = () => {
+      const now = G.now();
+      const ready = now < m.qStart;
+      $("#readyBox").classList.toggle("hidden", !ready);
+      $("#prompt").classList.toggle("hidden", ready);
+      $("#opts").classList.toggle("hidden", ready);
+      if (ready) { $("#readyN").textContent = Math.ceil((m.qStart - now) / 1000); return; }
+      const left = Math.max(0, m.deadline - now), sec = Math.ceil(left / 1000);
+      $("#clock").textContent = sec;
+      $("#tbar").style.transform = `scaleX(${left / (m.deadline - m.qStart)})`;
+      if (sec !== lastSec && sec <= 5 && sec > 0) G.sfx.tick(sec <= 3);
+      lastSec = sec;
+    };
+    tick(); tickId = setInterval(tick, 100);
+  }
+}
+
+function renderEnd(m) {
+  show("vEnd");
+  if (lastPhase === "end") return;
+  clearInterval(tickId); G.music.stop();
+  const b = m.board || [];
+  const slot = (p, place) => p ? `<div class="col"><div class="winner">${esc(p.name)}<small>${p.correct} correct</small></div><div class="step p${place}"><div class="place">${place}</div></div></div>` : `<div class="col"></div>`;
+  $("#podium").innerHTML = slot(b[1], 2) + slot(b[0], 1) + slot(b[2], 3);
+  $("#all").innerHTML = b.map((p) => `<li><span class="r">${p.rank}</span>${esc(p.name)}<span class="s">${p.correct}/${m.total}</span></li>`).join("");
+  G.sfx.fanfare();
+  setTimeout(() => G.confetti(6000), 2900);
+}
+}
+</script>
+</body>
+</html>

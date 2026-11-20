@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Join · Tax Review Live</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&family=Barlow:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/games/tax-review-fall2026/style.css">
+<style>
+.stage{padding:max(16px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom))}
+form{width:100%;max-width:420px;display:grid;gap:12px}
+#code{text-transform:uppercase;letter-spacing:6px;text-align:center;font:800 32px "Barlow Condensed",sans-serif}
+.big{font:800 clamp(40px,12vw,64px)/1 "Barlow Condensed",sans-serif}
+.pulse{animation:pulse 1.6s infinite}
+@keyframes pulse{50%{opacity:.4}}
+.opts{grid-template-columns:1fr;width:100%}
+.opt{font-size:20px;min-height:76px}
+.opt[disabled]{cursor:default}
+.item{font:700 clamp(22px,6vw,30px)/1.2 Barlow,sans-serif;text-wrap:balance}
+.result{width:100%;border-radius:18px;padding:26px 18px}
+.result.ok{background:var(--ok)}.result.no{background:var(--red)}
+.score{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+.top{flex-wrap:nowrap}.me{max-width:45vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:#fff;color:#111;border-radius:99px;padding:6px 14px;font-weight:700}
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="top">
+    <div class="brand">TAX REVIEW <b>LIVE</b></div>
+    <div class="spacer"></div>
+    <span class="chip hidden" id="conn">Reconnecting…</span>
+    <span class="me hidden" id="me"></span>
+    <button class="icon" id="mute" aria-label="Toggle sound">♪</button>
+  </div>
+
+  <section id="vJoin" class="center">
+    <h1 class="big">Join the game</h1>
+    <form id="form" autocomplete="off">
+      <input id="code" maxlength="5" placeholder="CODE" inputmode="text" aria-label="Game code" required>
+      <input id="name" maxlength="20" placeholder="Your name" aria-label="Your name" required>
+      <button class="btn" type="submit" style="font-size:26px">Enter</button>
+      <div class="muted" id="err" role="alert"></div>
+    </form>
+  </section>
+
+  <section id="vWait" class="center hidden">
+    <div class="big">You're in!</div>
+    <div class="muted pulse" style="font-size:22px">Waiting for the host to start…</div>
+    <div class="chip" id="waitCount"></div>
+  </section>
+
+  <section id="vReady" class="center hidden">
+    <div class="muted cond" style="font-size:28px" id="readyQ"></div>
+    <div class="big" style="font-size:120px;color:var(--red)" id="readyN">3</div>
+  </section>
+
+  <section id="vQ" class="hidden" style="flex:1;display:flex;flex-direction:column;gap:14px;padding-top:14px">
+    <div class="top"><span class="chip" id="qTag"></span><div class="spacer"></div><span class="cond" style="font-size:30px" id="clock"></span></div>
+    <div class="timerbar"><i id="tbar"></i></div>
+    <div class="item" id="item"></div>
+    <div class="opts" id="opts"></div>
+  </section>
+
+  <section id="vLocked" class="center hidden">
+    <div class="big">Locked in</div>
+    <div class="why" id="lockedAns" style="max-width:480px"></div>
+    <div class="muted pulse">Waiting for everyone else…</div>
+  </section>
+
+  <section id="vReveal" class="center hidden">
+    <div class="result" id="result"><div class="big" id="resTitle"></div><div id="resSub" style="margin-top:6px;font-size:18px"></div></div>
+    <div class="why" id="why" style="text-align:left;width:100%"></div>
+    <div class="score"><span class="chip" id="myScore"></span><span class="chip" id="myRank"></span></div>
+    <div class="muted pulse">Next question coming up…</div>
+  </section>
+
+  <section id="vEnd" class="center hidden">
+    <div class="muted cond" style="font-size:26px">You finished</div>
+    <div class="big" style="font-size:110px;color:var(--red)" id="place"></div>
+    <div id="endMsg" style="font-size:22px;font-weight:700"></div>
+    <ol class="board" id="top3" style="width:100%;max-width:420px;text-align:left"></ol>
+  </section>
+
+  <section id="vKicked" class="center hidden"><div class="big">You were removed</div><button class="btn" onclick="location.href='/games/tax-review-fall2026/'">Join again</button></section>
+</div>
+
+<script src="/games/tax-review-fall2026/common.js"></script>
+<script>
+{
+const $ = (s) => document.querySelector(s), G = window.Game, esc = G.esc;
+const views = ["vJoin", "vWait", "vReady", "vQ", "vLocked", "vReveal", "vEnd", "vKicked"];
+const show = (id) => views.forEach((v) => $("#" + v).classList.toggle("hidden", v !== id));
+const letters = "ABCD";
+let sock = null, me = G.store.get("player"), lastKey = "", tickId = null, pending = null;
+
+$("#mute").onclick = () => { const m = G.music.toggle(); $("#mute").textContent = m ? "🔇" : "♪"; };
+$("#mute").textContent = G.music.muted ? "🔇" : "♪";
+
+const qp = new URLSearchParams(location.search).get("code");
+if (qp) $("#code").value = qp.toUpperCase();
+if (me) { $("#name").value = me.name; if (!qp) $("#code").value = me.code; }
+// Rejoin automatically after a refresh or a dropped connection.
+if (me && (!qp || qp.toUpperCase() === me.code)) check(me.code).then((ok) => ok && connect());
+
+async function check(code) {
+  try { const r = await fetch(`/games/tax-review-fall2026/api/check/${code}`); const j = await r.json(); return j.ok; } catch { return false; }
+}
+
+$("#form").onsubmit = async (e) => {
+  e.preventDefault();
+  G.sfx.unlock();
+  const code = $("#code").value.trim().toUpperCase(), name = $("#name").value.trim().replace(/\s+/g, " ");
+  if (!/^[A-Z0-9]{5}$/.test(code)) return ($("#err").textContent = "Codes are 5 characters.");
+  if (!name) return ($("#err").textContent = "Add your name to play.");
+  $("#err").textContent = "Checking…";
+  if (!(await check(code))) return ($("#err").textContent = "No game with that code. Check the screen.");
+  $("#err").textContent = "";
+  const pid = me && me.code === code ? me.pid : (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2) + Date.now());
+  me = { code, name, pid };
+  G.store.set("player", me);
+  connect();
+};
+
+function connect() {
+  if (sock) sock.close();
+  const proto = location.protocol === "https:" ? "wss" : "ws";
+  sock = G.connect(`${proto}://${location.host}/games/tax-review-fall2026/ws/${me.code}?pid=${encodeURIComponent(me.pid)}&name=${encodeURIComponent(me.name)}`,
+    onMsg, (ok) => $("#conn").classList.toggle("hidden", ok));
+}
+
+function onMsg(m) {
+  if (m.t === "kicked") { G.store.set("player", null); sock.close(); return show("vKicked"); }
+  if (m.t !== "state" || !m.you) return;
+  $("#me").textContent = m.you.name; $("#me").classList.remove("hidden");
+  const key = `${m.phase}:${m.qi}`, isNew = key !== lastKey;
+  if (m.phase === "lobby") { show("vWait"); $("#waitCount").textContent = `${m.players.length} player${m.players.length === 1 ? "" : "s"} in`; }
+  else if (m.phase === "question") question(m, isNew);
+  else if (m.phase === "reveal") reveal(m, isNew);
+  else if (m.phase === "end") end(m, isNew);
+  lastKey = key;
+}
+
+function question(m, isNew) {
+  if (m.you.answered != null) { clearInterval(tickId); return locked(m.q, m.you.answered); }
+  if (!isNew) return;
+  pending = null;
+  const q = m.q;
+  $("#qTag").textContent = `${m.qi + 1}/${m.total} · ${q.tag}`;
+  $("#item").textContent = q.kind === "lie" ? "Which one is the lie?" : q.prompt;
+  $("#opts").innerHTML = q.options.map((o, i) => `<button class="opt o${i}" data-i="${i}"><span class="k">${letters[i]}</span><span>${esc(o)}</span></button>`).join("");
+  $("#readyQ").textContent = `Question ${m.qi + 1}`;
+  clearInterval(tickId);
+  const tick = () => {
+    const now = G.now();
+    if (now < m.qStart) { show("vReady"); $("#readyN").textContent = Math.ceil((m.qStart - now) / 1000); return; }
+    if (pending == null) show("vQ");
+    const left = Math.max(0, m.deadline - now);
+    $("#clock").textContent = Math.ceil(left / 1000);
+    $("#tbar").style.transform = `scaleX(${left / (m.deadline - m.qStart)})`;
+  };
+  tick(); tickId = setInterval(tick, 100);
+}
+
+$("#opts").onclick = (e) => {
+  const b = e.target.closest("[data-i]"); if (!b || pending != null) return;
+  pending = Number(b.dataset.i);
+  if (navigator.vibrate) try { navigator.vibrate(30); } catch {}
+  G.sfx.click();
+  sock.send({ t: "answer", i: pending });
+  locked(null, pending, b.textContent.slice(1).trim());
+};
+
+function locked(q, i, text) {
+  show("vLocked");
+  $("#lockedAns").textContent = `${letters[i]}. ${text || (q ? q.options[i] : "")}`;
+}
+
+function reveal(m, isNew) {
+  clearInterval(tickId);
+  show("vReveal");
+  if (!isNew) return;
+  const ok = m.you.right, a = m.reveal.answer, mine = m.you.answered;
+  $("#result").className = "result " + (ok ? "ok" : "no");
+  $("#resTitle").textContent = ok ? "Correct!" : mine == null ? "Time's up" : "Not quite";
+  $("#resSub").textContent = ok ? "Nice work." : `Answer: ${letters[a]}. ${m.q.options[a]}`;
+  $("#why").textContent = m.reveal.why;
+  $("#myScore").textContent = `${m.you.correct} correct`;
+  $("#myRank").textContent = `#${m.you.rank} of ${m.you.of}`;
+  ok ? G.sfx.right() : G.sfx.wrong();
+}
+
+function end(m, isNew) {
+  clearInterval(tickId);
+  show("vEnd");
+  if (!isNew) return;
+  const r = m.you.rank;
+  $("#place").textContent = `#${r}`;
+  $("#endMsg").textContent = r === 1 ? "Champion! 🏆" : r <= 3 ? "You made the podium!" : `${m.you.correct} correct. Nice effort!`;
+  $("#top3").innerHTML = (m.board || []).slice(0, 3).map((p) => `<li><span class="r">${p.rank}</span>${esc(p.name)}<span class="s">${p.correct}</span></li>`).join("");
+  if (r <= 3) { G.sfx.fanfare(); setTimeout(() => G.confetti(5000), 1000); }
+}
+}
+</script>
+</body>
+</html>

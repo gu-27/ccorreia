@@ -1,0 +1,45 @@
+/* VOICE: game-show energy, quick to read from the back row
+   IDEA: a quiz-show set in crimson and black
+   PICTURE: the live question or podium fills the screen
+   COLOUR and TYPE: crimson #A6192E, black, white; Barlow Condensed + Barlow
+   LAYOUT: one full-screen stage per phase */
+:root{--red:#A6192E;--redhi:#d12a45;--black:#111;--ink:#fff;--muted:#bbb;--panel:#1d1d1d;--line:#333;--ok:#2e8b57;color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html,body{height:100%}
+body{margin:0;background:radial-gradient(120% 90% at 50% 0%,#2a0a10 0%,var(--black) 60%);color:var(--ink);font:17px/1.45 Barlow,system-ui,sans-serif;overflow-x:clip}
+h1,h2,h3,.cond{font-family:"Barlow Condensed",sans-serif;line-height:1.05;margin:0;font-weight:800}
+button{font:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.btn{background:var(--red);color:#fff;border:0;border-radius:12px;padding:12px 22px;min-height:52px;font:800 22px "Barlow Condensed",sans-serif;letter-spacing:.3px}
+.btn:hover{background:var(--redhi)}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.ghost{background:transparent;border:2px solid #555}
+.btn.white{background:#fff;color:var(--red)}
+.stage{min-height:100vh;display:flex;flex-direction:column;padding:clamp(16px,3vw,36px)}
+.hidden{display:none!important}
+.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.top .spacer{flex:1}
+.brand{font:800 22px "Barlow Condensed",sans-serif;letter-spacing:.5px}
+.brand b{color:var(--red)}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--panel);border-radius:99px;padding:6px 14px;font-weight:600}
+.icon{background:var(--panel);border:0;color:#fff;border-radius:10px;min-width:48px;min-height:48px;font-size:20px}
+.muted{color:var(--muted)}
+.center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:18px}
+input,select{font:600 20px Barlow,sans-serif;background:#fff;color:#111;border:0;border-radius:12px;padding:14px 16px;width:100%;min-height:56px}
+.opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.opt{border:0;border-radius:14px;color:#fff;text-align:left;padding:18px 20px;display:flex;gap:14px;align-items:center;font:700 clamp(18px,2.4vw,30px)/1.2 Barlow,sans-serif;min-height:clamp(70px,12vh,140px);position:relative;transition:transform .12s,opacity .2s}
+.opt .k{flex:none;width:44px;height:44px;border-radius:10px;background:rgba(0,0,0,.3);display:grid;place-items:center;font:800 26px "Barlow Condensed",sans-serif}
+.o0{background:#A6192E}.o1{background:#2b2b2b;outline:2px solid #555;outline-offset:-2px}.o2{background:#6d1020}.o3{background:#5a5a5a}
+.opt.dim{opacity:.28}
+.opt.correct{outline:5px solid #fff;outline-offset:-5px}
+.opt .n{margin-left:auto;font:800 30px "Barlow Condensed",sans-serif;opacity:.9}
+.bar{position:absolute;left:0;bottom:0;height:6px;background:#fff;border-radius:0 3px 3px 0;opacity:.85;transition:width .6s}
+.timerbar{height:10px;background:#2a2a2a;border-radius:6px;overflow:hidden}
+.timerbar i{display:block;height:100%;background:var(--red);transform-origin:left}
+.board{list-style:none;padding:0;margin:0;display:grid;gap:8px}
+.board li{display:flex;align-items:center;gap:12px;background:var(--panel);border-radius:10px;padding:10px 14px;font-weight:600}
+.board .r{font:800 24px "Barlow Condensed",sans-serif;width:34px;color:var(--red)}
+.board .s{margin-left:auto;font:800 24px "Barlow Condensed",sans-serif}
+.why{background:var(--panel);border-left:6px solid var(--red);border-radius:10px;padding:14px 16px;font-size:clamp(17px,1.8vw,22px)}
+@media(max-width:640px){.opts{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}

@@ -1,0 +1,11 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "tax-review-sessions",
+  "main": "src/index.js",
+  "compatibility_date": "2025-09-01",
+  "workers_dev": false,
+  "durable_objects": {
+    "bindings": [{ "name": "SESSION", "class_name": "Session" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Session"] }]
+}
