@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Tax Study Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&family=Barlow:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/games/tax-study-fall2026/style.css">
+<style>
+.wrap{max-width:1100px;margin:0 auto;width:100%}
+.stage{padding:max(16px,env(safe-area-inset-top)) clamp(14px,3vw,32px) max(16px,env(safe-area-inset-bottom))}
+.toggle{display:inline-flex;background:var(--panel);border-radius:99px;padding:4px;gap:4px}
+.toggle button{border:0;background:transparent;color:#ccc;border-radius:99px;min-height:42px;padding:6px 18px;font:800 19px "Barlow Condensed",sans-serif}
+.toggle button[aria-pressed=true]{background:var(--red);color:#fff}
+.hero{padding:clamp(22px,4vw,44px) 0 18px}
+.hero h1{font-size:clamp(40px,6vw,68px)}
+.hero p{color:var(--muted);margin:8px 0 0;font-size:19px;max-width:60ch}
+.games{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.card{background:var(--panel);border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:12px;border-top:6px solid var(--red)}
+.card h2{font-size:34px}
+.card p{margin:0;color:var(--muted)}
+.card .spacer{flex:1}
+.choices{display:flex;flex-wrap:wrap;gap:8px}
+.choices button{background:#2b2b2b;color:#fff;border:2px solid #444;border-radius:10px;min-height:46px;padding:6px 14px;font-weight:700}
+.choices button:hover{border-color:var(--red)}
+.choices button.go{background:var(--red);border-color:var(--red)}
+.teambar{display:none;background:#2a1015;border:2px solid var(--red);border-radius:14px;padding:14px 16px;margin-bottom:16px;gap:12px;align-items:center;flex-wrap:wrap}
+body.team .teambar{display:flex}
+.teambar input{max-width:260px;min-height:48px;font-size:18px}
+.joinrow{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:22px;background:var(--panel);border-radius:14px;padding:14px 16px}
+.joinrow input{max-width:170px;min-height:48px;text-transform:uppercase;letter-spacing:4px;font:800 22px "Barlow Condensed",sans-serif;text-align:center}
+.joinrow input#jName{max-width:220px;letter-spacing:0;text-transform:none;font:600 18px Barlow,sans-serif;text-align:left}
+.seg{display:inline-flex;gap:6px;flex-wrap:wrap}
+.seg button{background:#2b2b2b;color:#fff;border:2px solid #444;border-radius:8px;min-height:40px;padding:4px 12px;font-weight:700}
+.seg button[aria-pressed=true]{background:#fff;color:#111;border-color:#fff}
+.note{font-size:14px;color:var(--muted)}
+/* game views */
+.gbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.gbar .spacer{flex:1}
+.gbar .btn{min-height:44px;font-size:19px;padding:8px 14px}
+.score{font:800 30px "Barlow Condensed",sans-serif;color:#ffd166}
+.qcard{background:var(--panel);border-radius:18px;padding:clamp(18px,3vw,32px);display:grid;gap:16px}
+.qprompt{font:700 clamp(22px,3.2vw,36px)/1.2 Barlow,sans-serif;text-wrap:balance}
+.opts .opt{min-height:64px;font-size:clamp(17px,2vw,22px)}
+.opt.correct{outline:5px solid #fff;outline-offset:-5px}
+.opt.dim{opacity:.3}
+.fb{border-radius:12px;padding:14px 16px;font-size:18px}
+.fb.ok{background:var(--ok)}.fb.no{background:#3a1419;border-left:6px solid var(--red)}
+.pts{color:#ffd166;font:800 30px "Barlow Condensed",sans-serif;font-variant-numeric:tabular-nums}
+.jboard{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;background:#000;padding:6px;border-radius:14px}
+.jcat{background:var(--red);color:#fff;font:800 clamp(12px,1.6vw,19px)/1.1 "Barlow Condensed",sans-serif;text-transform:uppercase;text-align:center;display:grid;place-items:center;min-height:64px;padding:6px;border-radius:8px;overflow-wrap:anywhere;hyphens:auto}
+.jtile{background:#1e1e1e;color:#ffd166;border:0;border-radius:8px;font:800 clamp(20px,3.6vw,40px) "Barlow Condensed",sans-serif;min-height:clamp(52px,8vw,84px)}
+.jtile:hover{background:#2a1015}
+.jtile.used{color:transparent;background:#141414;pointer-events:none}
+.flash{perspective:1400px;cursor:pointer;min-height:340px}
+.flash .in{position:relative;min-height:340px;transition:transform .5s;transform-style:preserve-3d}
+.flash.flip .in{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;overflow:auto;backface-visibility:hidden;border-radius:20px;padding:clamp(20px,4vw,40px);display:flex;flex-direction:column;justify-content:center;gap:14px;text-align:center}
+.face.fr{background:#fff;color:#111}
+.face.bk{background:var(--red);transform:rotateY(180deg)}
+.face .t{font:700 clamp(22px,3.2vw,34px)/1.25 Barlow,sans-serif;text-wrap:balance}
+.face .tag{font:800 16px "Barlow Condensed",sans-serif;text-transform:uppercase;opacity:.7}
+.review{list-style:none;padding:0;margin:0;display:grid;gap:8px}
+.review li{background:var(--panel);border-radius:10px;padding:12px 14px}
+.review b{color:#ffd166}
+@media(max-width:820px){.games{grid-template-columns:1fr}}
+@media(max-width:600px){.jcat{font-size:9px;min-height:56px;padding:3px}.jboard{gap:3px;padding:3px}}
+</style>
+</head>
+<body>
+<div class="stage">
+<div class="wrap">
+  <div class="top">
+    <div class="brand">TAX <b>STUDY</b> HUB</div>
+    <div class="spacer"></div>
+    <div class="toggle" role="group" aria-label="Mode">
+      <button id="mSolo" aria-pressed="true">Solo</button>
+      <button id="mTeam" aria-pressed="false">Team</button>
+    </div>
+    <button class="icon" id="mute" aria-label="Toggle sound">♪</button>
+  </div>
+
+  <!-- HUB -->
+  <section id="vHub">
+    <div class="hero">
+      <h1>Study for the exam</h1>
+      <p id="heroP">Chapters 5 &amp; 6: exclusions, deductions and losses. Pick a game and study on your own, or switch to Team to play with classmates.</p>
+    </div>
+    <div class="teambar">
+      <b class="cond" style="font-size:22px">Team mode</b>
+      <span class="note" style="flex:1;min-width:200px">You'll host a room. Classmates join from their own phones or laptops with your code, and you control the pace.</span>
+      <input id="hostName" maxlength="20" placeholder="Your name" aria-label="Your name">
+    </div>
+    <div class="games">
+      <div class="card">
+        <h2>Jeopardy</h2>
+        <p>Five categories, 25 clues and a Final Jeopardy. <span class="teamonly">In team mode, the fastest correct answer wins the tile.</span></p>
+        <div class="spacer"></div>
+        <div class="choices"><button class="go" data-play="jeopardy">Play Jeopardy</button></div>
+      </div>
+      <div class="card">
+        <h2>Quiz</h2>
+        <p>Card Sort (48 items) or Two Truths &amp; a Lie (19 rounds) against the clock. Points count down from 1,000.</p>
+        <div class="spacer"></div>
+        <div class="choices"><button class="go" data-play="quiz" data-g="sort">Card Sort</button><button class="go" data-play="quiz" data-g="lie">Two Truths &amp; a Lie</button><button class="go" data-play="quiz" data-g="mix">Mix</button></div>
+      </div>
+      <div class="card">
+        <h2>Flashcards</h2>
+        <p class="soloonly">Flip, then mark "got it" or "missed it." Missed cards come back around.</p>
+        <p class="teamonly">Speed round: the first correct answer takes the card.</p>
+        <div class="spacer"></div>
+        <div class="choices soloonly"><button class="go" data-play="flash" data-d="all">All cards</button><button data-play="flash" data-d="sort">Card Sort</button><button data-play="flash" data-d="lie">True / False</button><button data-play="flash" data-d="jeopardy">Jeopardy</button></div>
+        <div class="choices teamonly"><button class="go" data-play="flash" data-d="all">Start speed round</button></div>
+      </div>
+    </div>
+    <div class="row" style="display:flex;gap:18px;flex-wrap:wrap;margin-top:16px;align-items:center">
+      <span class="note">Questions per quiz:</span>
+      <div class="seg" id="segCount"><button data-v="10" aria-pressed="false">10</button><button data-v="15" aria-pressed="true">15</button><button data-v="20" aria-pressed="false">20</button><button data-v="0" aria-pressed="false">All</button></div>
+      <span class="note">Seconds:</span>
+      <div class="seg" id="segSecs"><button data-v="15" aria-pressed="false">15</button><button data-v="20" aria-pressed="true">20</button><button data-v="30" aria-pressed="false">30</button></div>
+    </div>
+    <form class="joinrow" id="joinForm" autocomplete="off">
+      <b class="cond" style="font-size:22px">Have a room code?</b>
+      <input id="jCode" maxlength="5" placeholder="CODE" aria-label="Room code">
+      <input id="jName" maxlength="20" placeholder="Your name" aria-label="Your name">
+      <button class="btn" type="submit">Join room</button>
+      <span class="note" id="jErr" role="alert"></span>
+    </form>
+  </section>
+
+  <!-- SOLO QUIZ -->
+  <section id="vQuiz" class="hidden">
+    <div class="gbar"><button class="btn ghost back">← Hub</button><span class="chip" id="qzTag"></span><div class="spacer"></div><span class="pts" id="qzPts">1000</span><span class="score" id="qzScore">0</span></div>
+    <div class="timerbar"><i id="qzBar"></i></div>
+    <div class="qcard" style="margin-top:14px">
+      <div class="note" id="qzNum"></div>
+      <div class="qprompt" id="qzPrompt"></div>
+      <div class="opts" id="qzOpts"></div>
+      <div class="fb hidden" id="qzFb"></div>
+      <div><button class="btn hidden" id="qzNext">Next</button></div>
+    </div>
+  </section>
+
+  <!-- SOLO JEOPARDY -->
+  <section id="vJeop" class="hidden">
+    <div class="gbar"><button class="btn ghost back">← Hub</button><div class="spacer"></div><span class="note">Score</span><span class="score" id="jpScore">$0</span><button class="btn ghost" id="jpFinalBtn">Final Jeopardy</button><button class="btn ghost" id="jpReset">New board</button></div>
+    <div class="jboard" id="jpBoard"></div>
+    <div class="qcard hidden" id="jpClue" style="margin-top:14px">
+      <div class="note" id="jpMeta"></div>
+      <div id="jpWager" class="hidden" style="display:grid;gap:10px">
+        <div>Wager up to <b id="jpMax"></b>, then see the clue.</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap"><input id="jpWagerIn" type="number" min="0" style="max-width:200px" aria-label="Wager"><button class="btn" id="jpWagerGo">Lock wager</button></div>
+      </div>
+      <div class="qprompt" id="jpPrompt"></div>
+      <div class="opts" id="jpOpts"></div>
+      <div class="fb hidden" id="jpFb"></div>
+      <div><button class="btn hidden" id="jpBack">Back to board</button></div>
+    </div>
+  </section>
+
+  <!-- SOLO FLASHCARDS -->
+  <section id="vFlash" class="hidden">
+    <div class="gbar"><button class="btn ghost back">← Hub</button><span class="chip" id="fcLeft"></span><div class="spacer"></div><span class="chip" id="fcGot"></span><span class="chip" id="fcMiss"></span></div>
+    <div class="flash" id="fcCard" tabindex="0" role="button" aria-label="Flip card">
+      <div class="in">
+        <div class="face fr"><div class="tag" id="fcTag"></div><div class="t" id="fcFront"></div><div style="color:#666" id="fcHint"></div><div style="color:#999;font-size:14px">Tap to flip</div></div>
+        <div class="face bk"><div class="tag">Answer</div><div class="t" id="fcBack"></div><div id="fcWhy" style="font-size:18px"></div></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:12px;justify-content:center;margin-top:16px;flex-wrap:wrap">
+      <button class="btn ghost" id="fcMissed" style="min-width:160px">Missed it</button>
+      <button class="btn" id="fcGotIt" style="min-width:160px;background:var(--ok)">Got it</button>
+    </div>
+  </section>
+
+  <!-- SOLO RESULTS -->
+  <section id="vDone" class="hidden">
+    <div class="hero"><h1 id="dnTitle"></h1><p id="dnSub"></p></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px"><button class="btn" id="dnAgain">Play again</button><button class="btn ghost back">Back to hub</button></div>
+    <h3 class="cond hidden" id="dnRevH" style="font-size:28px;margin-bottom:10px">Review what you missed</h3>
+    <ul class="review" id="dnRev"></ul>
+  </section>
+</div>
+</div>
+
+<script src="/games/tax-study-fall2026/common.js"></script>
+<script src="/games/tax-study-fall2026/bank-data.js"></script>
+<script src="/games/tax-study-fall2026/bank.js"></script>
+<script>
+{
+const $ = (s) => document.querySelector(s), $$ = (s) => [...document.querySelectorAll(s)];
+const G = window.Game, B = window.BANK, esc = G.esc, BASE = "/games/tax-study-fall2026";
+const L = "ABCD";
+const views = ["vHub", "vQuiz", "vJeop", "vFlash", "vDone"];
+const show = (id) => { views.forEach((v) => $("#" + v).classList.toggle("hidden", v !== id)); scrollTo(0, 0); };
+const css = document.createElement("style");
+document.head.appendChild(css);
+let team = false;
+const opts = { count: 15, secs: 20 };
+
+function setMode(t) {
+  team = t;
+  document.body.classList.toggle("team", t);
+  $("#mSolo").setAttribute("aria-pressed", !t); $("#mTeam").setAttribute("aria-pressed", t);
+  css.textContent = t ? ".soloonly{display:none!important}" : ".teamonly{display:none!important}";
+  G.store.set("studyMode", t ? "team" : "solo");
+}
+$("#mSolo").onclick = () => setMode(false);
+$("#mTeam").onclick = () => setMode(true);
+setMode(G.store.get("studyMode") === "team");
+$("#mute").onclick = () => { const m = G.music.toggle(); $("#mute").textContent = m ? "🔇" : "♪"; };
+$("#mute").textContent = G.music.muted ? "🔇" : "♪";
+
+const seg = (el, key) => el.onclick = (e) => { const b = e.target.closest("button"); if (!b) return; [...el.children].forEach((x) => x.setAttribute("aria-pressed", x === b)); opts[key] = Number(b.dataset.v); };
+seg($("#segCount"), "count"); seg($("#segSecs"), "secs");
+
+const saved = G.store.get("studyName");
+if (saved) { $("#hostName").value = saved; $("#jName").value = saved; }
+$$(".back").forEach((b) => b.onclick = () => { stopTimers(); G.music.stop(); show("vHub"); });
+
+// ---------- start a game ----------
+let again = null;
+$$("[data-play]").forEach((b) => b.onclick = () => {
+  G.sfx.unlock();
+  const kind = b.dataset.play;
+  if (team) return hostRoom(kind, b.dataset.g || "mix", b);
+  if (kind === "quiz") { again = () => soloQuiz(b.dataset.g); again(); }
+  if (kind === "jeopardy") { again = soloJeopardy; again(); }
+  if (kind === "flash") { again = () => soloFlash(b.dataset.d); again(); }
+});
+$("#dnAgain").onclick = () => again && again();
+
+// ---------- team mode: host or join ----------
+async function hostRoom(kind, g, btn) {
+  const name = $("#hostName").value.trim();
+  if (!name) { $("#hostName").focus(); $("#hostName").placeholder = "Add your name first"; return; }
+  G.store.set("studyName", name);
+  const body = { game: kind, secs: opts.secs };
+  if (kind === "quiz") body.questions = B.quiz(g, opts.count);
+  if (kind === "flash") body.questions = B.flashQs(opts.count || 30);
+  if (kind === "jeopardy") body.board = B.jeopardy();
+  btn.disabled = true;
+  try {
+    const r = await fetch(`${BASE}/api/room`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+    if (!r.ok) throw new Error(await r.text());
+    const { code, hostKey } = await r.json();
+    const pid = crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2);
+    G.store.set("room:" + code, { pid, name, hostKey });
+    location.href = `${BASE}/room?code=${code}`;
+  } catch (e) { alertBox("Couldn't create a room. Check your connection and try again."); }
+  btn.disabled = false;
+}
+function alertBox(msg) { $("#jErr").textContent = msg; }
+$("#joinForm").onsubmit = async (e) => {
+  e.preventDefault();
+  const code = $("#jCode").value.trim().toUpperCase(), name = $("#jName").value.trim();
+  if (!/^[A-Z0-9]{5}$/.test(code)) return ($("#jErr").textContent = "Room codes are 5 characters.");
+  if (!name) return ($("#jErr").textContent = "Add your name.");
+  $("#jErr").textContent = "Checking…";
+  const ok = await fetch(`${BASE}/api/check/${code}`).then((r) => r.json()).then((j) => j.ok).catch(() => false);
+  if (!ok) return ($("#jErr").textContent = "No room with that code.");
+  G.store.set("studyName", name);
+  const prev = G.store.get("room:" + code);
+  G.store.set("room:" + code, { pid: prev?.pid || (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2)), name, hostKey: prev?.hostKey });
+  location.href = `${BASE}/room?code=${code}`;
+};
+
+// ---------- timers ----------
+let tickId = null;
+const stopTimers = () => { clearInterval(tickId); tickId = null; };
+
+// ---------- solo quiz ----------
+function soloQuiz(g) {
+  const qs = B.quiz(g, opts.count), secs = opts.secs;
+  let i = 0, score = 0, right = 0, missed = [];
+  show("vQuiz"); G.music.play("question");
+  const ask = () => {
+    const q = qs[i];
+    $("#qzTag").textContent = q.tag; $("#qzNum").textContent = `Question ${i + 1} of ${qs.length}`;
+    $("#qzPrompt").textContent = q.kind === "lie" ? "Which one is the lie?" : q.prompt;
+    $("#qzOpts").style.gridTemplateColumns = q.kind === "lie" ? "1fr" : "";
+    $("#qzOpts").innerHTML = q.options.map((o, k) => `<button class="opt o${k}" data-k="${k}"><span class="k">${L[k]}</span><span>${esc(o)}</span></button>`).join("");
+    $("#qzFb").classList.add("hidden"); $("#qzNext").classList.add("hidden");
+    const t0 = Date.now(), total = secs * 1000;
+    let answered = false;
+    const finish = (k) => {
+      if (answered) return; answered = true; stopTimers();
+      const left = Math.max(0, total - (Date.now() - t0)), ok = k === q.answer;
+      const gain = ok ? Math.round(1000 * left / total) : 0;
+      score += gain; if (ok) right++; else missed.push({ q: q.kind === "lie" ? q.options[q.answer] : q.prompt, a: q.kind === "lie" ? "This is the lie." : q.options[q.answer], why: q.why });
+      $$("#qzOpts .opt").forEach((b, n) => b.classList.add(n === q.answer ? "correct" : "dim"));
+      $("#qzFb").className = "fb " + (ok ? "ok" : "no");
+      $("#qzFb").innerHTML = `<b>${ok ? `Correct! +${gain}` : k == null ? "Time's up." : "Not quite."}</b> ${ok ? "" : `Answer: ${L[q.answer]}. ${esc(q.options[q.answer])}.`} ${esc(q.why)}`;
+      $("#qzScore").textContent = score.toLocaleString();
+      $("#qzNext").textContent = i + 1 < qs.length ? "Next" : "See results"; $("#qzNext").classList.remove("hidden"); $("#qzNext").focus();
+      ok ? G.sfx.right() : G.sfx.wrong();
+    };
+    $("#qzOpts").onclick = (e) => { const b = e.target.closest("[data-k]"); if (b) finish(Number(b.dataset.k)); };
+    stopTimers();
+    tickId = setInterval(() => {
+      const left = Math.max(0, total - (Date.now() - t0));
+      $("#qzBar").style.transform = `scaleX(${left / total})`;
+      $("#qzPts").textContent = Math.round(1000 * left / total);
+      if (!left) finish(null);
+    }, 100);
+  };
+  $("#qzNext").onclick = () => { i++; if (i < qs.length) ask(); else done(); };
+  const done = () => {
+    G.music.stop(); G.sfx.fanfare();
+    results(`${score.toLocaleString()} points`, `${right} of ${qs.length} correct.`, missed);
+    if (right / qs.length >= 0.8) setTimeout(() => G.confetti(4000), 1200);
+  };
+  $("#qzScore").textContent = "0";
+  ask();
+}
+
+function results(title, sub, missed) {
+  show("vDone");
+  $("#dnTitle").textContent = title; $("#dnSub").textContent = sub;
+  $("#dnRevH").classList.toggle("hidden", !missed.length);
+  $("#dnRev").innerHTML = missed.map((m) => `<li>${esc(m.q)}<br><b>${esc(m.a)}</b> <span class="note">${esc(m.why)}</span></li>`).join("");
+}
+
+// ---------- solo jeopardy ----------
+function soloJeopardy() {
+  const board = B.jeopardy(), used = new Set();
+  let score = 0, missed = [];
+  show("vJeop"); $("#jpClue").classList.add("hidden");
+  const draw = () => {
+    $("#jpScore").textContent = (score < 0 ? "-$" : "$") + Math.abs(score).toLocaleString();
+    $("#jpBoard").innerHTML = board.cats.map((c) => `<div class="jcat">${esc(c.name)}</div>`).join("") +
+      [0, 1, 2, 3, 4].map((r) => board.cats.map((c, ci) => `<button class="jtile${used.has(ci + "-" + r) ? " used" : ""}" data-c="${ci}" data-r="${r}">$${c.clues[r].value}</button>`).join("")).join("");
+    $("#jpFinalBtn").classList.toggle("go", used.size === 25);
+  };
+  const clue = (q, value, meta, onDone) => {
+    $("#jpBoard").classList.add("hidden"); $("#jpClue").classList.remove("hidden");
+    $("#jpMeta").textContent = meta;
+    $("#jpPrompt").textContent = q.prompt;
+    $("#jpOpts").style.gridTemplateColumns = "1fr";
+    $("#jpOpts").innerHTML = q.options.map((o, k) => `<button class="opt o${k}" data-k="${k}"><span class="k">${L[k]}</span><span>${esc(o)}</span></button>`).join("");
+    $("#jpFb").classList.add("hidden"); $("#jpBack").classList.add("hidden");
+    let answered = false;
+    $("#jpOpts").onclick = (e) => {
+      const b = e.target.closest("[data-k]"); if (!b || answered) return; answered = true;
+      const ok = Number(b.dataset.k) === q.answer;
+      $$("#jpOpts .opt").forEach((x, n) => x.classList.add(n === q.answer ? "correct" : "dim"));
+      onDone(ok);
+      if (!ok) missed.push({ q: q.prompt, a: q.options[q.answer], why: q.why });
+      $("#jpFb").className = "fb " + (ok ? "ok" : "no");
+      $("#jpFb").innerHTML = `<b>${ok ? `Correct! +$${value}` : `Not quite${value ? ` (−$${value})` : ""}.`}</b> ${ok ? "" : `Answer: ${esc(q.options[q.answer])}.`} ${esc(q.why)}`;
+      $("#jpBack").classList.remove("hidden"); $("#jpBack").focus();
+      ok ? G.sfx.right() : G.sfx.wrong();
+    };
+  };
+  $("#jpBoard").onclick = (e) => {
+    const b = e.target.closest(".jtile"); if (!b) return;
+    const c = +b.dataset.c, r = +b.dataset.r, q = board.cats[c].clues[r];
+    used.add(c + "-" + r);
+    $("#jpWager").classList.add("hidden");
+    clue(q, q.value, `${board.cats[c].name} · $${q.value}`, (ok) => { score += ok ? q.value : -q.value; });
+    $("#jpBack").textContent = "Back to board";
+    $("#jpBack").onclick = () => { $("#jpClue").classList.add("hidden"); $("#jpBoard").classList.remove("hidden"); draw(); };
+  };
+  $("#jpFinalBtn").onclick = () => {
+    $("#jpBoard").classList.add("hidden"); $("#jpClue").classList.remove("hidden");
+    const max = Math.max(score, 1000);
+    $("#jpMeta").textContent = "Final Jeopardy"; $("#jpPrompt").textContent = ""; $("#jpOpts").innerHTML = "";
+    $("#jpFb").classList.add("hidden"); $("#jpBack").classList.add("hidden");
+    $("#jpWager").classList.remove("hidden"); $("#jpMax").textContent = "$" + max.toLocaleString();
+    $("#jpWagerIn").value = Math.min(max, 1000); $("#jpWagerIn").max = max;
+    $("#jpWagerGo").onclick = () => {
+      const w = Math.max(0, Math.min(max, Math.round(Number($("#jpWagerIn").value) || 0)));
+      $("#jpWager").classList.add("hidden");
+      clue(board.final, w, `Final Jeopardy · wager $${w}`, (ok) => { score += ok ? w : -w; });
+      $("#jpBack").textContent = "See results";
+      $("#jpBack").onclick = () => {
+        G.sfx.fanfare(); if (score > 0) setTimeout(() => G.confetti(4000), 1200);
+        results((score < 0 ? "-$" : "$") + Math.abs(score).toLocaleString(), `${used.size} of 25 clues played, plus Final Jeopardy.`, missed);
+      };
+    };
+  };
+  $("#jpReset").onclick = soloJeopardy;
+  draw(); $("#jpBoard").classList.remove("hidden");
+}
+
+// ---------- solo flashcards ----------
+function soloFlash(deck) {
+  let queue = B.flashcards(deck), got = 0, missedSet = new Map(), total = queue.length;
+  show("vFlash");
+  const draw = () => {
+    if (!queue.length) {
+      G.sfx.fanfare(); setTimeout(() => G.confetti(3500), 1200);
+      return results("Deck complete!", `${total} cards. ${missedSet.size ? `${missedSet.size} took more than one try.` : "You got every card the first time."}`,
+        [...missedSet.values()].map((c) => ({ q: c.front, a: c.back, why: c.why })));
+    }
+    const c = queue[0];
+    $("#fcCard").classList.remove("flip");
+    $("#fcTag").textContent = c.tag; $("#fcFront").textContent = c.front; $("#fcHint").textContent = c.hint;
+    $("#fcBack").textContent = c.back; $("#fcWhy").textContent = c.why;
+    $("#fcLeft").textContent = `${queue.length} left`; $("#fcGot").textContent = `${got} got`; $("#fcMiss").textContent = `${missedSet.size} missed`;
+  };
+  const flip = () => { $("#fcCard").classList.toggle("flip"); G.sfx.click(); };
+  $("#fcCard").onclick = flip;
+  $("#fcCard").onkeydown = (e) => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); flip(); } };
+  $("#fcGotIt").onclick = () => { if (!queue.length) return; queue.shift(); got++; draw(); };
+  $("#fcMissed").onclick = () => {
+    if (!queue.length) return;
+    const c = queue.shift(); missedSet.set(c.front, c);
+    queue.splice(Math.min(queue.length, 4 + Math.floor(Math.random() * 4)), 0, c); // comes back in a few cards
+    draw();
+  };
+  draw();
+}
+
+// Deep link: ?code=XXXXX prefills the join box.
+const qp = new URLSearchParams(location.search).get("code");
+if (qp) { $("#jCode").value = qp.toUpperCase(); $("#jName").focus(); }
+}
+</script>
+</body>
+</html>

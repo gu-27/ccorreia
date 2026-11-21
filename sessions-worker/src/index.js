@@ -1,5 +1,6 @@
 import { DurableObject } from "cloudflare:workers";
 import { CARDS, LIES } from "./questions.js";
+export { StudyRoom } from "./study.js";
 
 const ALPHA = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const BUCKETS = ["Taxable", "Excluded", "Deductible", "Not deductible"];

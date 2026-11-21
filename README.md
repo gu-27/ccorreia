@@ -43,3 +43,15 @@ Open two terminals:
 - `cd site && npm i && npx wrangler pages dev --port 8787`
 
 Then open http://localhost:8787/games/tax-review-fall2026/host.
+
+## Study hub (`/games/tax-study-fall2026`)
+
+A self-study site for the exam with three games: Jeopardy, Quiz (Card Sort / Two Truths & a Lie / Mix) and Flashcards.
+
+- **Solo** (the default) runs entirely in the student's browser.
+- **Team:** flip the toggle, enter a name and pick a game. That student becomes the host of a room, which runs on the same Worker using its `StudyRoom` class. Classmates join with the code or link. The host controls the pace and plays too.
+  - Quiz: points count down from 1,000.
+  - Jeopardy: the host picks tiles, and the fastest correct answer wins the tile. Final Jeopardy pays 1,000 to everyone who gets it right.
+  - Flashcards: a speed round where the fastest correct answer takes the card.
+
+All questions are in `site/public/games/tax-study-fall2026/bank-data.js`.
